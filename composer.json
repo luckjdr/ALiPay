@@ -1,0 +1,16 @@
+{
+    "name": "dori/alipay",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Dori\\Alipay\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "dori.ji",
+            "email": "dori.ji@feisu.com"
+        }
+    ],
+    "require": {}
+}
