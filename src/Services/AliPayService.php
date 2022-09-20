@@ -10,8 +10,9 @@ class AliPayService extends BaseService
     protected $signType;
     //私钥值
     protected $privateKey;
+    protected $returnForm;
 
-    public function __construct($appid, $returnUrl, $notifyUrl,$signType,$privateKey)
+    public function __construct($appid, $returnUrl, $notifyUrl,$signType,$privateKey,$returnForm=true)
     {
         $this->appId = $appid;
         $this->returnUrl = $returnUrl;
@@ -19,6 +20,7 @@ class AliPayService extends BaseService
         $this->charset = 'utf8';
         $this->signType = $signType;
         $this->privateKey=$privateKey;
+        $this->returnForm = $returnForm;
     }
     /**
      * 发起订单
@@ -44,7 +46,7 @@ class AliPayService extends BaseService
             'payment_type'=>1,
             'seller_id'=>$this->appId,         //卖家支付宝用户号（以2088开头的纯16位数字）
         );
-        return $this->buildRequestForm($requestConfigs);
+        return $this->buildRequestForm($requestConfigs,$this->returnForm);
     }
 
     public function notify($data,$alipayPublicKey)
@@ -59,15 +61,27 @@ class AliPayService extends BaseService
         }
         return false;
     }
+
     /**
      * 建立请求，以表单HTML形式构造（默认）
      * @param array $para_temp
-     * @return string
+     * @param $returnForm
+     * @return string|array
      */
-    function buildRequestForm($para_temp) {
+    function buildRequestForm($para_temp,$returnForm) {
         //待请求参数数组
         $para = $this->buildRequestPara($para_temp);
 
+        if (!$returnForm){
+            foreach ($para as $key=>$val){
+                $values[] = ['name'=>$key,'value'=>$val];
+            }
+            return [
+                'action'=>'https://mapi.alipay.com/gateway.do?_input_charset='.trim(strtolower($this->charset)),
+                'method'=>'post',
+                'values'=>isset($values) ? $values : []
+            ];
+        }
         $sHtml = "<form id='alipaysubmit' name='alipaysubmit' action='https://mapi.alipay.com/gateway.do?_input_charset=".trim(strtolower($this->charset))."' method='post'>";
         foreach ($para as $key=>$val){
             $sHtml.= "<input type='hidden' name='".$key."' value='".$val."'/>";
