@@ -1,7 +1,7 @@
 <?php
 namespace Dori\ali\Services;
 
-class AliPayService
+class AliPayService extends BaseService
 {
     protected $appId;
     protected $returnUrl;
@@ -47,6 +47,18 @@ class AliPayService
         return $this->buildRequestForm($requestConfigs);
     }
 
+    public function notify($data,$alipayPublicKey)
+    {
+        //支付宝公钥，账户中心->密钥管理->开放平台密钥，找到添加了支付功能的应用，根据你的加密类型，查看支付宝公钥
+        $this->alipayPublicKey = $alipayPublicKey;
+        $result = $this->rsaCheck($data);
+        if ($result===true && $_POST['trade_status'] == 'TRADE_SUCCESS')
+        {
+            //验证通过，业务逻辑外部处理
+            return true;
+        }
+        return false;
+    }
     /**
      * 建立请求，以表单HTML形式构造（默认）
      * @param array $para_temp
@@ -63,7 +75,7 @@ class AliPayService
         //submit按钮控件请不要含有name属性
         $sHtml = $sHtml."<input type='submit'  value='提交' style='display:none;'></form>";
 
-        $sHtml = $sHtml."<script>document.forms['alipaysubmit'].submit();</script>";
+//        $sHtml = $sHtml."<script>document.forms['alipaysubmit'].submit();</script>";
 
         return $sHtml;
     }
