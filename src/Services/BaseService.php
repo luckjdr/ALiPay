@@ -9,6 +9,7 @@ class BaseService
     //支付宝公钥
     protected $alipayPublicKey;
     protected $charset;
+    protected $privateKey;
 
     /**
      *  验证签名
@@ -96,5 +97,27 @@ class BaseService
             }
         }
         return $data;
+    }
+
+    public function generateSign($params, $signType = "RSA") {
+        return $this->sign($this->getSignContent($params), $signType);
+    }
+    protected function sign($data, $signType = "RSA") {
+        $priKey=$this->privateKey;;
+        $res = "-----BEGIN RSA PRIVATE KEY-----\n" .
+            wordwrap($priKey, 64, "\n", true) .
+            "\n-----END RSA PRIVATE KEY-----";
+        ($res) or die('您使用的私钥格式错误，请检查RSA私钥配置');
+        if ("RSA2" == $signType) {
+            openssl_sign($data, $sign, $res, version_compare(PHP_VERSION,'5.4.0', '<') ? SHA256 : OPENSSL_ALGO_SHA256); //OPENSSL_ALGO_SHA256是php5.4.8以上版本才支持
+        } else {
+            openssl_sign($data, $sign, $res);
+        }
+        $sign = base64_encode($sign);
+        return $sign;
+    }
+    public function buildOrderStr($data)
+    {
+        return http_build_query($data);
     }
 }

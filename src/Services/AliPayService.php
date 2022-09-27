@@ -9,7 +9,7 @@ class AliPayService extends BaseService
     protected $charset;
     protected $signType;
     //私钥值
-    protected $privateKey;
+//    protected $privateKey;
     protected $returnForm;
 
     public function __construct($appid, $returnUrl, $notifyUrl,$signType,$privateKey,$returnForm=true)
@@ -22,13 +22,12 @@ class AliPayService extends BaseService
         $this->privateKey=$privateKey;
         $this->returnForm = $returnForm;
     }
+
     /**
-     * 发起订单
+     * 旧版支付宝支付发起订单
      * @param float $totalFee 收款总费用 单位元
      * @param string $outTradeNo 唯一的订单号
      * @param string $orderName 订单名称
-     * @param string $notifyUrl 支付结果通知url 不要有问号
-     * @param string $timestamp 订单发起时间
      * @return string
      */
     public function pay($totalFee, $outTradeNo, $orderName)
@@ -48,6 +47,42 @@ class AliPayService extends BaseService
         );
         return $this->buildRequestForm($requestConfigs,$this->returnForm);
     }
+
+    /**
+     * @Author: dori
+     * @Date: 2022/9/27
+     * @Descrip:app支付、jsapi支付
+     * @param $totalFee
+     * @param $outTradeNo
+     * @param $orderName
+     * @return string
+     */
+    public function payApp($totalFee, $outTradeNo, $orderName)
+    {
+        //请求参数
+        $requestConfigs = array(
+            'out_trade_no'=>$outTradeNo,
+            'total_amount'=>$totalFee, //单位 元
+            'subject'=>$orderName,  //订单标题
+            'product_code'=>'QUICK_MSECURITY_PAY', //销售产品码，商家和支付宝签约的产品码，为固定值QUICK_MSECURITY_PAY
+        );
+        $commonConfigs = array(
+            //公共参数
+            'app_id' => $this->appId,
+            'method' => 'alipay.trade.app.pay',             //接口名称
+            'format' => 'JSON',
+            'charset'=>$this->charset,
+            'sign_type'=>'RSA2',
+            'timestamp'=>date('Y-m-d H:i:s'),
+            'version'=>'1.0',
+            'notify_url' => $this->notifyUrl,
+            'biz_content'=>json_encode($requestConfigs),
+        );
+        $commonConfigs["sign"] = $this->generateSign($commonConfigs, $commonConfigs['sign_type']);
+        $result = $this->buildOrderStr($commonConfigs);
+        return $result;
+    }
+
 
     public function notify($data,$alipayPublicKey)
     {
